@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Monitor, 
   Smartphone, 
@@ -70,11 +70,104 @@ const technologies = [
 
 export default function TechExpertise() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Animated floating particles
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const particles: Array<{
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      radius: number;
+      opacity: number;
+    }> = [];
+
+    for (let i = 0; i < 50; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        radius: Math.random() * 1.5,
+        opacity: Math.random() * 0.5
+      });
+    }
+
+    let animationId: number;
+
+    const animate = () => {
+      ctx.fillStyle = 'rgba(5, 5, 5, 0.1)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach((particle) => {
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+
+        if (particle.x < 0) particle.x = canvas.width;
+        if (particle.x > canvas.width) particle.x = 0;
+        if (particle.y < 0) particle.y = canvas.height;
+        if (particle.y > canvas.height) particle.y = 0;
+
+        ctx.fillStyle = `rgba(0, 102, 204, ${particle.opacity})`;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', resize);
+      cancelAnimationFrame(animationId);
+    };
+  }, []);
 
   return (
     <section id="expertise" className="relative py-24 bg-cody-darker overflow-hidden">
+      {/* Animated particle canvas */}
+      <canvas 
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{ opacity: 0.4 }}
+      />
+
       {/* Background */}
-      <div className="absolute inset-0 grid-pattern opacity-30" />
+      <div className="absolute inset-0 grid-pattern opacity-20" />
+
+      {/* Interactive globe effect - follows mouse */}
+      <div 
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 102, 204, 0.05) 0%, transparent 50%)`
+        }}
+      />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
@@ -95,21 +188,32 @@ export default function TechExpertise() {
               key={tech.title}
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
-              className="group relative p-6 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-cody-blue/20 transition-all duration-500 cursor-pointer overflow-hidden"
+              className={`group relative p-6 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-cody-blue/30 transition-all duration-500 cursor-pointer overflow-hidden ${
+                hoveredIndex === index ? 'card-entrance' : ''
+              }`}
+              style={{
+                transform: hoveredIndex === index ? 'translateY(-4px) scale(1.02)' : 'translateY(0) scale(1)',
+                boxShadow: hoveredIndex === index ? '0 20px 40px rgba(0, 102, 204, 0.15)' : 'none'
+              }}
             >
-              {/* Gradient background on hover */}
+              {/* Enhanced gradient background on hover */}
               <div className={`absolute inset-0 bg-gradient-to-br ${tech.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+              
+              {/* Glow effect */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{
+                boxShadow: `inset 0 0 40px rgba(0, 102, 204, 0.1), 0 0 40px rgba(0, 102, 204, 0.1)`
+              }} />
               
               {/* Content */}
               <div className="relative z-10">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center group-hover:bg-white/10 transition-colors">
-                    <tech.icon className="w-6 h-6 text-cody-blue" />
+                  <div className="w-12 h-12 bg-gradient-to-br from-cody-blue/20 to-cyan-500/10 rounded-xl flex items-center justify-center group-hover:from-cody-blue/40 group-hover:to-cyan-500/30 transition-all duration-300">
+                    <tech.icon className={`w-6 h-6 text-cody-blue ${hoveredIndex === index ? 'icon-pulse' : ''}`} />
                   </div>
                   <ArrowRight className="w-5 h-5 text-white/20 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300" />
                 </div>
 
-                <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-cody-blue transition-colors">
+                <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-cody-blue transition-colors duration-300">
                   {tech.title}
                 </h3>
                 
@@ -120,8 +224,8 @@ export default function TechExpertise() {
                 </p>
               </div>
 
-              {/* Corner accent */}
-              <div className="absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-cody-blue/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              {/* Enhanced corner accent with glow */}
+              <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-cody-blue/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl" />
             </div>
           ))}
         </div>

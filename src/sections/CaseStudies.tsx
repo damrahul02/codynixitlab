@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { ArrowRight, ArrowLeft, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -55,6 +55,31 @@ const caseStudies = [
 
 export default function CaseStudies() {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [visibleCards, setVisibleCards] = useState<boolean[]>(new Array(caseStudies.length).fill(false));
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = Array.from(scrollRef.current?.children || []).indexOf(entry.target as Element);
+            setVisibleCards((prev) => {
+              const newState = [...prev];
+              if (index !== -1) newState[index] = true;
+              return newState;
+            });
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    scrollRef.current?.querySelectorAll('.case-study-card').forEach((card) => {
+      observer.observe(card);
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -114,52 +139,60 @@ export default function CaseStudies() {
           {caseStudies.map((study, index) => (
             <div
               key={study.id}
-              className="group flex-shrink-0 w-[350px] sm:w-[400px]"
-              style={{ scrollSnapAlign: 'start' }}
+              className={`case-study-card group flex-shrink-0 w-[350px] sm:w-[400px] ${
+                visibleCards[index] ? 'card-entrance' : 'opacity-0'
+              }`}
+              style={{ 
+                scrollSnapAlign: 'start',
+                animationDelay: `${index * 80}ms`
+              }}
             >
-              <div className="relative h-[500px] rounded-2xl overflow-hidden bg-cody-gray border border-white/5 hover:border-cody-blue/30 transition-all duration-500">
+              <div className="relative h-[500px] rounded-2xl overflow-hidden bg-cody-gray border border-white/5 hover:border-cody-blue/30 transition-all duration-500 hover-lift group-hover:shadow-2xl">
                 {/* Background gradient */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${study.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                 
-                {/* Image */}
-                <div className="absolute inset-0">
+                {/* Image with parallax effect */}
+                <div className="absolute inset-0 overflow-hidden">
                   <img 
                     src={study.image} 
                     alt={study.title}
-                    className="w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-700"
+                    className="w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-110 transition-all duration-1000 ease-out parallax-element"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-cody-darker via-cody-darker/50 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-cody-darker via-cody-darker/50 to-transparent group-hover:via-cody-darker/40 transition-all duration-500" />
                 </div>
 
                 {/* Content */}
-                <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                <div className="absolute inset-0 p-6 flex flex-col justify-end transition-all duration-300">
                   {/* Category */}
-                  <span className="inline-block px-3 py-1 bg-white/10 backdrop-blur-sm text-white/70 text-xs rounded-full w-fit mb-3">
+                  <span className="inline-block px-3 py-1 bg-white/10 backdrop-blur-sm text-white/70 text-xs rounded-full w-fit mb-3 group-hover:bg-cody-blue/30 group-hover:text-cody-blue transition-all duration-300">
                     {study.category}
                   </span>
                   
-                  {/* Title */}
-                  <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                  {/* Title with animated arrow */}
+                  <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-2 group-hover:text-cody-blue transition-colors duration-300">
                     {study.title}
-                    <ArrowRight className="w-5 h-5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                    <ArrowRight className="w-5 h-5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
                   </h3>
                   
-                  {/* Description */}
-                  <p className="text-white/60 text-sm line-clamp-2 mb-4">
+                  {/* Description with smooth reveal */}
+                  <p className="text-white/60 text-sm line-clamp-2 mb-4 group-hover:text-white/80 transition-colors duration-300">
                     {study.description}
                   </p>
 
-                  {/* View project link */}
-                  <button className="flex items-center gap-2 text-cody-blue text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  {/* View project link with enhanced animation */}
+                  <button className="flex items-center gap-2 text-cody-blue text-sm font-medium opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
                     View project
-                    <ExternalLink className="w-4 h-4" />
+                    <ExternalLink className="w-4 h-4 group-hover:rotate-45 transition-transform duration-300" />
                   </button>
                 </div>
 
-                {/* Index number */}
-                <div className="absolute top-4 right-4 text-white/20 text-6xl font-bold">
+                {/* Animated Index number */}
+                <div className="absolute top-4 right-4 text-white/20 text-6xl font-bold group-hover:text-white/40 transition-all duration-500 group-hover:scale-110">
                   0{index + 1}
                 </div>
+
+                {/* Animated corner glow */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-radial from-cody-blue/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full blur-2xl" />
               </div>
             </div>
           ))}

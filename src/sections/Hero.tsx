@@ -251,17 +251,24 @@ export default function Hero() {
             {services.map((service, index) => (
               <div
                 key={service.title}
-                className="group p-6 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl hover:bg-white/10 hover:border-cody-blue/30 transition-all duration-500 card-glow"
+                className={`group p-6 bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-sm border border-white/10 rounded-2xl hover:from-white/10 hover:to-white/5 hover:border-cody-blue/30 transition-all duration-500 card-glow hover-lift overflow-hidden relative ${
+                  index % 2 === 1 ? 'card-entrance' : 'card-entrance'
+                }`}
                 style={{ 
                   animationDelay: `${index * 100}ms`,
-                  transform: index % 2 === 1 ? 'translateY(20px)' : 'translateY(0)'
+                  transform: index % 2 === 1 ? 'translateY(0)' : 'translateY(0)'
                 }}
               >
-                <div className="w-12 h-12 mb-4 bg-cody-blue/20 rounded-xl flex items-center justify-center group-hover:bg-cody-blue/30 transition-colors">
-                  <service.icon className="w-6 h-6 text-cody-blue" />
+                {/* Animated gradient background on hover */}
+                <div className="absolute inset-0 bg-gradient-to-r from-cody-blue/10 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <div className="relative z-10">
+                  <div className="w-12 h-12 mb-4 bg-gradient-to-br from-cody-blue/20 to-cyan-500/10 rounded-xl flex items-center justify-center group-hover:from-cody-blue/40 group-hover:to-cyan-500/30 transition-all duration-300">
+                    <service.icon className="w-6 h-6 text-cody-blue group-hover:scale-110 transition-transform duration-300" />
+                  </div>
+                  <h3 className="text-white font-semibold mb-2 group-hover:text-cody-blue transition-colors duration-300">{service.title}</h3>
+                  <p className="text-white/50 text-sm group-hover:text-white/70 transition-colors duration-300">{service.description}</p>
                 </div>
-                <h3 className="text-white font-semibold mb-2">{service.title}</h3>
-                <p className="text-white/50 text-sm">{service.description}</p>
               </div>
             ))}
           </div>

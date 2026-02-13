@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowRight, Building2, GraduationCap, Heart, ShoppingCart, Store, Briefcase, Truck, Factory } from 'lucide-react';
 
 const industries = [
@@ -38,6 +38,19 @@ const moreIndustries = [
 
 export default function Industries() {
   const [activeIndustry, setActiveIndustry] = useState<string | null>(null);
+  const [visibleIndustries, setVisibleIndustries] = useState<boolean[]>(new Array(industries.length).fill(false));
+
+  useEffect(() => {
+    industries.forEach((_, index) => {
+      setTimeout(() => {
+        setVisibleIndustries((prev) => {
+          const newState = [...prev];
+          newState[index] = true;
+          return newState;
+        });
+      }, index * 100);
+    });
+  }, []);
 
   return (
     <section id="industries" className="relative py-24 bg-cody-darker overflow-hidden">
@@ -53,42 +66,53 @@ export default function Industries() {
           </p>
         </div>
 
-        {/* Main industry cards */}
+        {/* Main industry cards with animations */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
-          {industries.map((industry) => (
+          {industries.map((industry, index) => (
             <div
               key={industry.id}
               onMouseEnter={() => setActiveIndustry(industry.id)}
               onMouseLeave={() => setActiveIndustry(null)}
-              className="group relative h-[400px] rounded-2xl overflow-hidden cursor-pointer"
+              className={`group relative h-[400px] rounded-2xl overflow-hidden cursor-pointer ${
+                visibleIndustries[index] ? 'slide-in-left' : 'opacity-0'
+              }`}
+              style={{ animationDelay: `${index * 100}ms` }}
             >
-              {/* Background image */}
+              {/* Background image with parallax */}
               <div className="absolute inset-0">
                 <img 
                   src={industry.image} 
                   alt={industry.title}
-                  className="w-full h-full object-cover opacity-40 group-hover:opacity-30 group-hover:scale-105 transition-all duration-700"
+                  className="w-full h-full object-cover opacity-40 group-hover:opacity-30 group-hover:scale-110 transition-all duration-700 ease-out"
                 />
                 <div className={`absolute inset-0 bg-gradient-to-t ${industry.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                <div className="absolute inset-0 bg-gradient-to-t from-cody-darker via-cody-darker/80 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-cody-darker via-cody-darker/80 to-transparent group-hover:via-cody-darker/60 transition-all duration-500" />
               </div>
+
+              {/* Animated glow on hover */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{
+                boxShadow: 'inset 0 0 50px rgba(0, 102, 204, 0.15)'
+              }} />
 
               {/* Content */}
               <div className="absolute inset-0 p-6 flex flex-col justify-between">
                 <div>
-                  <span className="text-white/30 text-sm font-mono">{industry.id}</span>
+                  <span className="text-white/30 text-sm font-mono group-hover:text-cody-blue/60 transition-colors duration-300">{industry.id}</span>
                 </div>
 
                 <div>
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-                      <industry.icon className="w-5 h-5 text-cody-blue" />
+                    <div className="w-10 h-10 bg-gradient-to-br from-cody-blue/20 to-cyan-500/10 rounded-lg flex items-center justify-center group-hover:from-cody-blue/40 group-hover:to-cyan-500/30 transition-all duration-300">
+                      <industry.icon className="w-5 h-5 text-cody-blue group-hover:scale-110 transition-transform duration-300" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white">{industry.title}</h3>
+                    <h3 className="text-2xl font-bold text-white group-hover:text-cody-blue transition-colors duration-300">{industry.title}</h3>
                   </div>
                   
+                  {/* Animated underline */}
+                  <div className="h-0.5 w-0 bg-gradient-to-r from-cody-blue to-transparent group-hover:w-full transition-all duration-500 mb-3" />
+                  
                   <p className={`text-white/60 text-sm mb-4 transition-all duration-300 ${
-                    activeIndustry === industry.id ? 'opacity-100' : 'opacity-0'
+                    activeIndustry === industry.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
                   }`}>
                     {industry.description}
                   </p>
@@ -97,7 +121,7 @@ export default function Industries() {
                     activeIndustry === industry.id ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
                   }`}>
                     Learn more
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
                   </button>
                 </div>
               </div>
@@ -105,20 +129,28 @@ export default function Industries() {
           ))}
         </div>
 
-        {/* More industries */}
+        {/* More industries with staggered animation */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-          {moreIndustries.map((industry) => (
+          {moreIndustries.map((industry, index) => (
             <div
               key={industry.id}
-              className="group p-4 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 hover:border-cody-blue/20 transition-all duration-300 cursor-pointer"
+              className="group p-4 bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/5 rounded-xl hover:bg-gradient-to-br hover:from-cody-blue/10 hover:to-cyan-500/5 hover:border-cody-blue/30 transition-all duration-300 cursor-pointer overflow-hidden"
+              style={{
+                animation: `card-entrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards`,
+                animationDelay: `${(industries.length + index) * 80}ms`,
+                opacity: 0
+              }}
             >
-              <span className="text-white/30 text-xs font-mono block mb-2">{industry.id}</span>
+              <span className="text-white/30 text-xs font-mono block mb-2 group-hover:text-cody-blue/60 transition-colors duration-300">{industry.id}</span>
               <div className="flex items-center gap-2">
-                <industry.icon className="w-4 h-4 text-white/50 group-hover:text-cody-blue transition-colors" />
-                <span className="text-white/70 group-hover:text-white text-sm font-medium transition-colors">
+                <industry.icon className="w-4 h-4 text-white/50 group-hover:text-cody-blue group-hover:scale-110 transition-all duration-300" />
+                <span className="text-white/70 group-hover:text-white text-sm font-medium transition-colors duration-300">
                   {industry.title}
                 </span>
               </div>
+              
+              {/* Hover background effect */}
+              <div className="absolute inset-0 -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-cody-blue/10 to-cyan-500/10" />
             </div>
           ))}
         </div>

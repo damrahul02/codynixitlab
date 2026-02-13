@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Rocket, Sparkles, Code, ArrowRight, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -55,6 +55,26 @@ const packages = [
 
 export default function Services() {
   const [activeStep, setActiveStep] = useState(0);
+  const [stackedCards, setStackedCards] = useState<number[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+
+      const rect = containerRef.current.getBoundingClientRect();
+      const isInView = rect.top < window.innerHeight && rect.bottom > 0;
+
+      if (isInView) {
+        const scrollPercent = Math.max(0, -rect.top / rect.height);
+        const numStacked = Math.min(packages.length - 1, Math.floor(scrollPercent * packages.length));
+        setStackedCards(Array.from({ length: numStacked }, (_, i) => i));
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <section id="services" className="relative py-24 bg-cody-darker overflow-hidden">
@@ -114,64 +134,78 @@ export default function Services() {
             ))}
           </div>
 
-          {/* Right side - Package cards */}
-          <div className="space-y-6">
-            {packages.map((pkg) => (
-              <div
-                key={pkg.title}
-                className={`group relative p-6 rounded-2xl border transition-all duration-500 hover-lift ${
-                  pkg.popular 
-                    ? 'bg-white/10 border-cody-blue/30' 
-                    : 'bg-white/5 border-white/10 hover:border-cody-blue/20'
-                }`}
-              >
-                {/* Popular badge */}
-                {pkg.popular && (
-                  <div className="absolute -top-3 right-6 px-3 py-1 bg-cody-blue text-white text-xs font-medium rounded-full">
-                    Most Popular
-                  </div>
-                )}
-
-                {/* Gradient background on hover */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${pkg.gradient} opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-500`} />
-
-                <div className="relative z-10">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 bg-cody-blue/20 rounded-xl flex items-center justify-center">
-                      <pkg.icon className="w-6 h-6 text-cody-blue" />
+          {/* Right side - Package cards with sticky stacking */}
+          <div className="relative h-[600px]" ref={containerRef}>
+            <div className="sticky top-20 space-y-6">
+              {packages.map((pkg, index) => (
+                <div
+                  key={pkg.title}
+                  className={`group relative p-6 rounded-2xl border transition-all duration-500 hover-lift origin-top ${
+                    pkg.popular 
+                      ? 'bg-white/10 border-cody-blue/30' 
+                      : 'bg-white/5 border-white/10 hover:border-cody-blue/20'
+                  } ${
+                    stackedCards.includes(index) 
+                      ? 'card-entrance opacity-100 scale-100' 
+                      : 'opacity-100 scale-100'
+                  }`}
+                  style={{
+                    transform: stackedCards.includes(index)
+                      ? `translateY(-${index * 30}px) scale(${1 - index * 0.02})`
+                      : 'translateY(0) scale(1)',
+                    transitionProperty: 'transform',
+                    transitionDuration: '0.4s',
+                    transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)'
+                  }}
+                >
+                  {/* Popular badge with animation */}
+                  {pkg.popular && (
+                    <div className="absolute -top-3 right-6 px-3 py-1 bg-gradient-to-r from-cody-blue to-cyan-500 text-white text-xs font-medium rounded-full shadow-lg shadow-cody-blue/50 group-hover:shadow-xl group-hover:shadow-cody-blue/80 transition-shadow duration-300">
+                      Most Popular
                     </div>
-                    <span className="px-3 py-1 bg-white/10 text-white text-sm rounded-full">
-                      {pkg.price} {pkg.price !== 'Custom' && 'only'}
-                    </span>
-                  </div>
+                  )}
 
-                  <h3 className="text-xl font-bold text-white mb-2 whitespace-pre-line">
-                    {pkg.title}
-                  </h3>
-                  <p className="text-white/50 text-sm mb-4">
-                    {pkg.description}
-                  </p>
+                  {/* Enhanced Gradient background on hover */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${pkg.gradient} opacity-0 group-hover:opacity-100 rounded-2xl transition-all duration-500 blur-lg group-hover:blur-0`} />
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-wrap gap-2">
-                      {pkg.features.slice(0, 2).map((feature) => (
-                        <span key={feature} className="flex items-center gap-1 text-xs text-white/40">
-                          <Check className="w-3 h-3 text-cody-blue" />
-                          {feature}
-                        </span>
-                      ))}
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-cody-blue/20 to-cyan-500/20 rounded-xl flex items-center justify-center group-hover:from-cody-blue/40 group-hover:to-cyan-500/40 transition-all duration-300">
+                        <pkg.icon className="w-6 h-6 text-cody-blue group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                      <span className="px-3 py-1 bg-gradient-to-r from-white/10 to-white/5 text-white text-sm rounded-full group-hover:from-cody-blue/20 group-hover:to-cody-blue/10 transition-all duration-300">
+                        {pkg.price} {pkg.price !== 'Custom' && 'only'}
+                      </span>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      className="text-cody-blue hover:text-white hover:bg-cody-blue/20 group/btn"
-                    >
-                      Learn more
-                      <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                    </Button>
+
+                    <h3 className="text-xl font-bold text-white mb-2 whitespace-pre-line group-hover:text-cody-blue transition-colors duration-300">
+                      {pkg.title}
+                    </h3>
+                    <p className="text-white/50 text-sm mb-4 group-hover:text-white/70 transition-colors duration-300">
+                      {pkg.description}
+                    </p>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap gap-2">
+                        {pkg.features.slice(0, 2).map((feature) => (
+                          <span key={feature} className="flex items-center gap-1 text-xs text-white/40 group-hover:text-white/60 transition-colors duration-300">
+                            <Check className="w-3 h-3 text-cody-blue" />
+                            {feature}
+                          </span>
+                        ))}
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        className="text-cody-blue hover:text-white hover:bg-cody-blue/20 group/btn transition-all duration-300"
+                      >
+                        Learn more
+                        <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform duration-300" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
